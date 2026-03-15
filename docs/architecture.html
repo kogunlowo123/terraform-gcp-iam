@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>terraform-gcp-iam | Architecture</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0b0c0b;color:#f5f2eb;font-family:'Courier New',Courier,monospace;line-height:1.7;padding:0}
+a{color:#c8420a;text-decoration:none}a:hover{text-decoration:underline}
+.accent{color:#c8420a}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+header{background:linear-gradient(135deg,#0b0c0b 0%,#1a1b1a 100%);border-bottom:2px solid #c8420a;padding:2rem 0}
+header .container{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+header h1{font-size:1.8rem;letter-spacing:1px}
+.badge{display:inline-flex;align-items:center;gap:.5rem;background:#1a1b1a;border:1px solid #333;border-radius:6px;padding:.4rem .8rem;font-size:.8rem}
+.badge img{height:18px}
+.section{margin:3rem 0}
+.section h2{font-size:1.4rem;color:#c8420a;border-bottom:1px solid #222;padding-bottom:.5rem;margin-bottom:1.5rem}
+.section h3{font-size:1.1rem;color:#f5f2eb;margin:1.5rem 0 .75rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.card{background:#131413;border:1px solid #222;border-radius:8px;padding:1.25rem;transition:border-color .2s}
+.card:hover{border-color:#c8420a}
+.card h3{margin:0 0 .5rem;font-size:1rem;color:#c8420a}
+.card p{font-size:.85rem;color:#aaa}
+.card .stat{font-size:1.6rem;font-weight:bold;color:#f5f2eb}
+.diagram{background:#131413;border:1px solid #222;border-radius:8px;padding:2rem;overflow-x:auto}
+.diagram .row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}
+.diagram .box{background:#1a1b1a;border:1px solid #c8420a;border-radius:6px;padding:.75rem 1.25rem;text-align:center;font-size:.8rem;min-width:120px}
+.diagram .box.highlight{background:#c8420a;color:#fff;border-color:#c8420a}
+.diagram .arrow{color:#c8420a;font-size:1.2rem}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:1rem 0}
+table th{text-align:left;padding:.6rem;background:#1a1b1a;color:#c8420a;border-bottom:2px solid #c8420a}
+table td{padding:.6rem;border-bottom:1px solid #1a1b1a}
+table tr:hover td{background:#131413}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:.4rem 0;padding-left:1.5rem;position:relative;font-size:.9rem}
+.checklist li::before{content:"[x]";position:absolute;left:0;color:#c8420a;font-weight:bold}
+code{background:#1a1b1a;padding:.15rem .4rem;border-radius:3px;font-size:.85rem;color:#c8420a}
+pre{background:#131413;border:1px solid #222;border-radius:8px;padding:1.25rem;overflow-x:auto;font-size:.82rem;line-height:1.6}
+footer{border-top:2px solid #c8420a;margin-top:4rem;padding:2rem 0;text-align:center;font-size:.8rem;color:#555}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="container">
+<div>
+<h1>terraform-gcp-iam</h1>
+<p style="color:#aaa;font-size:.9rem;margin-top:.25rem">Comprehensive IAM Management for Google Cloud</p>
+</div>
+<div style="display:flex;gap:.75rem;align-items:center">
+<span class="badge"><img src="https://www.gstatic.com/devrel-devsite/prod/v0e0f589edd85502a40d78d7d0f2f25834f5f2f981ee4e9bc3ad30721d1c038af/cloud/images/favicons/onecloud/super_cloud.png" alt="GCP">Google Cloud Platform</span>
+<span class="badge">Terraform Module</span>
+</div>
+</div>
+</header>
+
+<div class="container">
+
+<div class="section">
+<h2>Executive Summary</h2>
+<p>This Terraform module provides a unified interface for managing the complete IAM lifecycle on Google Cloud Platform. It handles service account creation and key management, custom IAM roles at both project and organization levels, IAM member bindings across project/folder/organization scopes with conditional access, Workload Identity Federation with OIDC and AWS providers, service account impersonation, and organization policy enforcement. All resources support dynamic creation via <code>for_each</code> with comprehensive input validation.</p>
+</div>
+
+<div class="section">
+<h2>Overview</h2>
+<div class="cards">
+<div class="card"><div class="stat">7</div><h3>Resource Types</h3><p>Service Accounts, Keys, Custom Roles, IAM Bindings, WIF, Impersonation, Org Policies</p></div>
+<div class="card"><div class="stat">3</div><h3>IAM Scopes</h3><p>Project, Folder, Organization level bindings with conditions</p></div>
+<div class="card"><div class="stat">11</div><h3>Input Variables</h3><p>Fully configurable via maps of objects with validations</p></div>
+<div class="card"><div class="stat">11</div><h3>Outputs</h3><p>Service account emails, role IDs, WIF pool IDs, project info</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Architecture Diagram</h2>
+<div class="diagram">
+<div class="row">
+<div class="box highlight">IAM Module</div>
+</div>
+<div class="row">
+<div class="arrow">|</div>
+</div>
+<div class="row">
+<div class="box">Service Accounts<br><small>+ Keys</small></div>
+<div class="box">Custom Roles<br><small>Project + Org</small></div>
+<div class="box">Workload Identity<br><small>Pools + Providers</small></div>
+</div>
+<div class="row">
+<div class="arrow">|</div>
+</div>
+<div class="row">
+<div class="box">Project IAM<br><small>Bindings</small></div>
+<div class="box">Folder IAM<br><small>Bindings</small></div>
+<div class="box">Org IAM<br><small>Bindings</small></div>
+</div>
+<div class="row">
+<div class="arrow">|</div>
+</div>
+<div class="row">
+<div class="box">Impersonation<br><small>Token Creator</small></div>
+<div class="arrow">&lt;--&gt;</div>
+<div class="box">Org Policies<br><small>Boolean + List</small></div>
+<div class="arrow">&lt;--&gt;</div>
+<div class="box">Conditional Access<br><small>CEL Expressions</small></div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Component Breakdown</h2>
+<div class="grid-2">
+<div>
+<h3>Service Accounts & Keys</h3>
+<p>Creates service accounts via <code>google_service_account</code> with configurable display name, description, and disabled state. Keys generated with RSA-2048 algorithm. Project ID defaults from module variable but can be overridden per account.</p>
+
+<h3>Custom IAM Roles</h3>
+<p>Supports both <code>google_project_iam_custom_role</code> and <code>google_organization_iam_custom_role</code>. Roles accept lists of permissions with lifecycle stage (ALPHA through GA). Validated against allowed stage values.</p>
+
+<h3>IAM Bindings (3 Scopes)</h3>
+<p>Uses <code>google_project_iam_member</code>, <code>google_folder_iam_member</code>, and <code>google_organization_iam_member</code>. All support multiple members per binding and optional IAM conditions with CEL expressions.</p>
+</div>
+<div>
+<h3>Workload Identity Federation</h3>
+<p>Creates <code>google_iam_workload_identity_pool</code> with nested providers supporting OIDC (with issuer URI, audiences, JWKS) and AWS (account ID). Attribute mappings and conditions for token exchange.</p>
+
+<h3>Service Account Impersonation</h3>
+<p>Grants <code>roles/iam.serviceAccountTokenCreator</code> to specified members with optional conditions. Enables cross-service-account delegation.</p>
+
+<h3>Organization Policies</h3>
+<p>Applies <code>google_project_organization_policy</code> constraints with boolean enforcement or list-based allow/deny values.</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Data Flow</h2>
+<div class="diagram">
+<div class="row">
+<div class="box">Terraform Config</div>
+<div class="arrow">--&gt;</div>
+<div class="box highlight">Module Variables</div>
+<div class="arrow">--&gt;</div>
+<div class="box">Locals Processing</div>
+</div>
+<div class="row"><div class="arrow">|</div></div>
+<div class="row">
+<div class="box">SA / Roles / WIF Created</div>
+<div class="arrow">--&gt;</div>
+<div class="box">IAM Bindings Applied</div>
+<div class="arrow">--&gt;</div>
+<div class="box">Org Policies Enforced</div>
+</div>
+<div class="row"><div class="arrow">|</div></div>
+<div class="row">
+<div class="box">External Identities (OIDC/AWS)</div>
+<div class="arrow">--&gt;</div>
+<div class="box">Token Exchange via WIF</div>
+<div class="arrow">--&gt;</div>
+<div class="box">GCP Resource Access</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>Security Controls</h2>
+<table>
+<tr><th>Control</th><th>Implementation</th><th>Details</th></tr>
+<tr><td>Least Privilege</td><td>Fine-grained IAM member bindings</td><td>Per-role, per-member with conditions</td></tr>
+<tr><td>Conditional Access</td><td>CEL expression-based IAM conditions</td><td>Time-based, resource-based, attribute-based</td></tr>
+<tr><td>Keyless Auth</td><td>Workload Identity Federation</td><td>OIDC + AWS providers, no exported keys</td></tr>
+<tr><td>Input Validation</td><td>Project ID, SA ID regex validation</td><td>6-30 chars, lowercase, alphanumeric + hyphens</td></tr>
+<tr><td>Org Policy Enforcement</td><td>Boolean and list constraints</td><td>Restrict serial port, VMs, locations, etc.</td></tr>
+<tr><td>Impersonation Control</td><td>Explicit Token Creator grants</td><td>Auditable cross-SA delegation</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Industry Adaptation</h2>
+<div class="cards">
+<div class="card"><h3>Enterprise</h3><p>Multi-level IAM bindings (project/folder/org). Org policies for governance. Workload Identity for CI/CD pipelines.</p></div>
+<div class="card"><h3>Regulated Industries</h3><p>Conditional access with time-bound permissions. Org policies to restrict regions and services.</p></div>
+<div class="card"><h3>Multi-Cloud</h3><p>WIF with AWS providers for cross-cloud workloads. OIDC for GitHub Actions, GitLab, Azure DevOps.</p></div>
+<div class="card"><h3>Startups</h3><p>Simple service accounts with project IAM bindings. Grow into custom roles and org policies as needed.</p></div>
+</div>
+</div>
+
+<div class="section">
+<h2>Production Readiness Checklist</h2>
+<ul class="checklist">
+<li>Use Workload Identity Federation instead of exported keys</li>
+<li>Apply least-privilege IAM bindings with specific roles</li>
+<li>Enable conditional access for sensitive permissions</li>
+<li>Enforce org policies for security baselines</li>
+<li>Use custom roles when predefined roles are too broad</li>
+<li>Audit impersonation bindings regularly</li>
+<li>Validate all inputs with regex constraints</li>
+<li>Scope IAM at the narrowest level (project > folder > org)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Configuration Reference</h2>
+<h3>Key Input Variables</h3>
+<table>
+<tr><th>Variable</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>project_id</code></td><td>string</td><td>required</td><td>GCP project ID (validated regex)</td></tr>
+<tr><td><code>service_accounts</code></td><td>map(object)</td><td>{}</td><td>Service accounts to create</td></tr>
+<tr><td><code>custom_roles</code></td><td>map(object)</td><td>{}</td><td>Project-level custom roles</td></tr>
+<tr><td><code>project_iam_bindings</code></td><td>map(object)</td><td>{}</td><td>Project IAM bindings with conditions</td></tr>
+<tr><td><code>workload_identity_pools</code></td><td>map(object)</td><td>{}</td><td>WIF pools with providers</td></tr>
+<tr><td><code>org_policies</code></td><td>map(object)</td><td>{}</td><td>Organization policy constraints</td></tr>
+</table>
+
+<h3>Key Outputs</h3>
+<table>
+<tr><th>Output</th><th>Description</th></tr>
+<tr><td><code>service_account_emails</code></td><td>Map of SA IDs to email addresses</td></tr>
+<tr><td><code>custom_role_ids</code></td><td>Map of custom role IDs to resource IDs</td></tr>
+<tr><td><code>workload_identity_pool_ids</code></td><td>Map of pool IDs to resource IDs</td></tr>
+<tr><td><code>project_number</code></td><td>GCP project number</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Deployment</h2>
+<pre>
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+
+# Verify service accounts
+gcloud iam service-accounts list --project=YOUR_PROJECT_ID
+
+# Verify custom roles
+gcloud iam roles list --project=YOUR_PROJECT_ID --filter="deleted:false"
+</pre>
+</div>
+
+<div class="section">
+<h2>Links</h2>
+<p>
+<a href="https://cloud.google.com/iam/docs">GCP IAM Documentation</a> |
+<a href="https://cloud.google.com/iam/docs/workload-identity-federation">Workload Identity Federation</a> |
+<a href="https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_service_account">Terraform Registry</a> |
+<a href="https://github.com/kogunlowo123/terraform-gcp-iam">GitHub Repository</a>
+</p>
+</div>
+
+</div>
+
+<footer>
+<div class="container">
+<p>terraform-gcp-iam | Architecture Documentation</p>
+<p style="margin-top:.5rem">Generated from source analysis | Terraform >= 1.3.0 | Google Provider >= 5.0</p>
+</div>
+</footer>
+</body>
+</html>
