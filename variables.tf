@@ -1,7 +1,3 @@
-###############################################################################
-# General
-###############################################################################
-
 variable "project_id" {
   description = "The GCP project ID where resources will be created."
   type        = string
@@ -12,15 +8,8 @@ variable "project_id" {
   }
 }
 
-###############################################################################
-# Service Accounts
-###############################################################################
-
 variable "service_accounts" {
-  description = <<-EOT
-    Map of service accounts to create.
-    Key is the account_id (unique identifier).
-    EOT
+  description = "Map of service accounts to create, keyed by account_id."
   type = map(object({
     display_name = optional(string, "")
     description  = optional(string, "")
@@ -38,15 +27,8 @@ variable "service_accounts" {
   }
 }
 
-###############################################################################
-# Service Account Keys
-###############################################################################
-
 variable "service_account_keys" {
-  description = <<-EOT
-    Map of service account keys to create.
-    Key is a logical name; service_account_id must reference a service account.
-    EOT
+  description = "Map of service account keys to create, keyed by logical name."
   type = map(object({
     service_account_id = string
     key_algorithm      = optional(string, "KEY_ALG_RSA_2048")
@@ -64,15 +46,8 @@ variable "service_account_keys" {
   }
 }
 
-###############################################################################
-# Custom Roles
-###############################################################################
-
 variable "custom_roles" {
-  description = <<-EOT
-    Map of custom IAM roles to create at the project level.
-    Key is the role_id.
-    EOT
+  description = "Map of custom IAM roles to create at the project level, keyed by role_id."
   type = map(object({
     title       = string
     description = optional(string, "")
@@ -91,10 +66,7 @@ variable "custom_roles" {
 }
 
 variable "org_custom_roles" {
-  description = <<-EOT
-    Map of custom IAM roles to create at the organization level.
-    Key is the role_id.
-    EOT
+  description = "Map of custom IAM roles to create at the organization level, keyed by role_id."
   type = map(object({
     org_id      = string
     title       = string
@@ -105,15 +77,8 @@ variable "org_custom_roles" {
   default = {}
 }
 
-###############################################################################
-# Project-Level IAM Bindings
-###############################################################################
-
 variable "project_iam_bindings" {
-  description = <<-EOT
-    Map of project-level IAM bindings.
-    Key is a logical name; role and members are required.
-    EOT
+  description = "Map of project-level IAM bindings, keyed by logical name."
   type = map(object({
     project = optional(string, null)
     role    = string
@@ -127,15 +92,8 @@ variable "project_iam_bindings" {
   default = {}
 }
 
-###############################################################################
-# Folder-Level IAM Bindings
-###############################################################################
-
 variable "folder_iam_bindings" {
-  description = <<-EOT
-    Map of folder-level IAM bindings.
-    Key is a logical name.
-    EOT
+  description = "Map of folder-level IAM bindings, keyed by logical name."
   type = map(object({
     folder  = string
     role    = string
@@ -149,15 +107,8 @@ variable "folder_iam_bindings" {
   default = {}
 }
 
-###############################################################################
-# Organization-Level IAM Bindings
-###############################################################################
-
 variable "org_iam_bindings" {
-  description = <<-EOT
-    Map of organization-level IAM bindings.
-    Key is a logical name.
-    EOT
+  description = "Map of organization-level IAM bindings, keyed by logical name."
   type = map(object({
     org_id  = string
     role    = string
@@ -171,15 +122,8 @@ variable "org_iam_bindings" {
   default = {}
 }
 
-###############################################################################
-# Workload Identity Federation
-###############################################################################
-
 variable "workload_identity_pools" {
-  description = <<-EOT
-    Map of Workload Identity Pools to create.
-    Key is the pool_id.
-    EOT
+  description = "Map of Workload Identity Pools to create, keyed by pool_id."
   type = map(object({
     display_name = optional(string, "")
     description  = optional(string, "")
@@ -203,15 +147,8 @@ variable "workload_identity_pools" {
   default = {}
 }
 
-###############################################################################
-# Service Account Impersonation
-###############################################################################
-
 variable "service_account_impersonation" {
-  description = <<-EOT
-    Map of service account impersonation bindings.
-    Grants 'roles/iam.serviceAccountTokenCreator' to specified members.
-    EOT
+  description = "Map of service account impersonation bindings granting serviceAccountTokenCreator."
   type = map(object({
     service_account_email = string
     members               = list(string)
@@ -224,15 +161,8 @@ variable "service_account_impersonation" {
   default = {}
 }
 
-###############################################################################
-# Organization Policies
-###############################################################################
-
 variable "org_policies" {
-  description = <<-EOT
-    Map of organization policy constraints to apply at project level.
-    Key is the constraint name (e.g., 'compute.disableSerialPortAccess').
-    EOT
+  description = "Map of organization policy constraints to apply at project level."
   type = map(object({
     constraint = string
     boolean_policy = optional(object({

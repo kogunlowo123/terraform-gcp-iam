@@ -1,20 +1,12 @@
-###############################################################################
-# Service Accounts
-###############################################################################
-
 resource "google_service_account" "this" {
-  for_each = local.service_accounts
+  for_each = var.service_accounts
 
   account_id   = each.key
   display_name = each.value.display_name
   description  = each.value.description
   disabled     = each.value.disabled
-  project      = each.value.project
+  project      = coalesce(each.value.project, var.project_id)
 }
-
-###############################################################################
-# Service Account Keys
-###############################################################################
 
 resource "google_service_account_key" "this" {
   for_each = var.service_account_keys
@@ -24,10 +16,6 @@ resource "google_service_account_key" "this" {
   public_key_type    = each.value.public_key_type
   private_key_type   = each.value.private_key_type
 }
-
-###############################################################################
-# Custom Roles (Project Level)
-###############################################################################
 
 resource "google_project_iam_custom_role" "this" {
   for_each = var.custom_roles
@@ -40,10 +28,6 @@ resource "google_project_iam_custom_role" "this" {
   project     = var.project_id
 }
 
-###############################################################################
-# Custom Roles (Organization Level)
-###############################################################################
-
 resource "google_organization_iam_custom_role" "this" {
   for_each = var.org_custom_roles
 
@@ -55,18 +39,14 @@ resource "google_organization_iam_custom_role" "this" {
   stage       = each.value.stage
 }
 
-###############################################################################
-# Project-Level IAM Bindings
-###############################################################################
-
 resource "google_project_iam_member" "this" {
   for_each = merge([
-    for binding_key, binding in local.project_iam_bindings : {
+    for binding_key, binding in var.project_iam_bindings : {
       for member in binding.members :
       "${binding_key}/${member}" => {
-        project = binding.project
-        role    = binding.role
-        member  = member
+        project   = coalesce(binding.project, var.project_id)
+        role      = binding.role
+        member    = member
         condition = binding.condition
       }
     }
@@ -86,18 +66,14 @@ resource "google_project_iam_member" "this" {
   }
 }
 
-###############################################################################
-# Folder-Level IAM Bindings
-###############################################################################
-
 resource "google_folder_iam_member" "this" {
   for_each = merge([
     for binding_key, binding in var.folder_iam_bindings : {
       for member in binding.members :
       "${binding_key}/${member}" => {
-        folder = binding.folder
-        role   = binding.role
-        member = member
+        folder    = binding.folder
+        role      = binding.role
+        member    = member
         condition = binding.condition
       }
     }
@@ -117,18 +93,14 @@ resource "google_folder_iam_member" "this" {
   }
 }
 
-###############################################################################
-# Organization-Level IAM Bindings
-###############################################################################
-
 resource "google_organization_iam_member" "this" {
   for_each = merge([
     for binding_key, binding in var.org_iam_bindings : {
       for member in binding.members :
       "${binding_key}/${member}" => {
-        org_id = binding.org_id
-        role   = binding.role
-        member = member
+        org_id    = binding.org_id
+        role      = binding.role
+        member    = member
         condition = binding.condition
       }
     }
@@ -148,10 +120,6 @@ resource "google_organization_iam_member" "this" {
   }
 }
 
-###############################################################################
-# Workload Identity Pools
-###############################################################################
-
 resource "google_iam_workload_identity_pool" "this" {
   for_each = var.workload_identity_pools
 
@@ -162,12 +130,16 @@ resource "google_iam_workload_identity_pool" "this" {
   project                   = var.project_id
 }
 
-###############################################################################
-# Workload Identity Pool Providers
-###############################################################################
-
 resource "google_iam_workload_identity_pool_provider" "this" {
-  for_each = local.wip_providers
+  for_each = merge([
+    for pool_id, pool in var.workload_identity_pools : {
+      for provider_id, provider in pool.providers :
+      "${pool_id}/${provider_id}" => merge(provider, {
+        pool_id     = pool_id
+        provider_id = provider_id
+      })
+    }
+  ]...)
 
   workload_identity_pool_id          = google_iam_workload_identity_pool.this[each.value.pool_id].workload_identity_pool_id
   workload_identity_pool_provider_id = each.value.provider_id
@@ -195,10 +167,6 @@ resource "google_iam_workload_identity_pool_provider" "this" {
   }
 }
 
-###############################################################################
-# Service Account Impersonation
-###############################################################################
-
 resource "google_service_account_iam_member" "impersonation" {
   for_each = merge([
     for key, binding in var.service_account_impersonation : {
@@ -224,10 +192,6 @@ resource "google_service_account_iam_member" "impersonation" {
     }
   }
 }
-
-###############################################################################
-# Organization Policies
-###############################################################################
 
 resource "google_project_organization_policy" "this" {
   for_each = var.org_policies
