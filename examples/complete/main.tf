@@ -133,7 +133,7 @@ module "iam" {
         "aws-provider" = {
           display_name = "AWS Provider"
           attribute_mapping = {
-            "google.subject"  = "assertion.arn"
+            "google.subject"     = "assertion.arn"
             "attribute.aws_role" = "assertion.amr[0]"
           }
           aws = {
